@@ -20,4 +20,4 @@ This folder will hold the Azure infrastructure for the Azure Migrate nested Hype
 - Nested-virtualization-capable Windows host VM
 - Premium SSD data disk for nested VHDX storage
 - Optional storage account for artifacts
-- Optional Log Analytics workspace in supported dependency-analysis region
+- Optional Log Analytics workspace in Australia East for dependency analysis

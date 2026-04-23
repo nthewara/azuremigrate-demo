@@ -118,7 +118,9 @@ For Hyper-V, build the demo around **agent-based dependency analysis**.
 - Dependency agent
 
 ### Workspace design
-Create a Log Analytics workspace in **Southeast Asia** to avoid unsupported-region issues for Service Map / dependency visualization.
+Create the Log Analytics workspace in **Australia East** by default.
+
+Do not assume a forced cross-region dependency-analysis workspace. If a specific Azure Migrate dependency-analysis workflow rejects Australia East at deployment time, verify the current platform behavior live and adjust then — not in the baseline repo design.
 
 ### Demo group
 Install dependency agents on only 2-3 machines initially:

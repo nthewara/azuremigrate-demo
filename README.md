@@ -102,13 +102,12 @@ Azure RG
 
 ## Important gotchas
 
-### Log Analytics region constraint
-Dependency visualization requires a Log Analytics workspace in a supported region such as:
-- **Southeast Asia**
-- **East US**
-- **West Europe**
+### Log Analytics workspace region
+Do **not** hardcode a cross-region workspace requirement in this repo.
 
-So even if the lab runs in **Australia East**, the dependency workspace may need to live in **Southeast Asia**.
+Default the dependency-analysis workspace to **Australia East** with the rest of the lab. If Azure Migrate or the portal ever blocks association for a specific dependency-analysis path, validate the current supported-region behavior at build time and only then fall back to another supported region.
+
+For this demo plan, assume **Australia East is valid** unless a live platform check proves otherwise.
 
 ### Hyper-V host requirements for appliance
 The appliance expects:
