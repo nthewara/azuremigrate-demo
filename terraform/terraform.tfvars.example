@@ -1,0 +1,39 @@
+subscription_id = "b9d87a00-a4d8-47d9-84a2-cfd7a9d745d2"
+location        = "australiaeast"
+prefix          = "azmig"
+
+admin_username = "azmigadmin"
+admin_password = "REPLACE_ME"
+
+host_vm_size             = "Standard_D16s_v5"
+host_os_disk_size_gb     = 128
+nested_data_disk_size_gb = 512
+
+deploy_bastion        = true
+enable_host_public_ip = false
+home_ip               = "115.70.58.97/32"
+
+create_log_analytics_workspace = true
+auto_shutdown_time             = "1100"
+
+nested_subnet_cidr = "10.10.1.0/24"
+nested_gateway_ip  = "10.10.1.1"
+dhcp_start         = "10.10.1.100"
+dhcp_end           = "10.10.1.200"
+
+# Official Azure Migrate Hyper-V appliance package
+migrate_appliance_vhd_url = "https://go.microsoft.com/fwlink/?linkid=2191848"
+
+# Reused sysprepped guest templates from the Arc demo / Jumpstart storage
+windows_template_vhd_url = "https://jumpstartprodsg.blob.core.windows.net/arcbox/prod/ArcBox-Win2K22.vhdx"
+sql_template_vhd_url     = "https://jumpstartprodsg.blob.core.windows.net/arcbox/prod/ArcBox-SQL-DEV.vhdx"
+linux_template_vhd_url   = "https://jumpstartprodsg.blob.core.windows.net/arcbox/prod/ArcBox-Ubuntu-01.vhdx"
+
+windows_guest_admin_password = "ArcDemo123!!"
+linux_guest_username         = "jumpstart"
+linux_guest_password         = "JS123!!"
+
+tags = {
+  project     = "azuremigrate-demo"
+  environment = "lab"
+}

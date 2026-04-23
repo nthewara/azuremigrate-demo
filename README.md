@@ -1,142 +1,113 @@
 # Azure Migrate Demo
 
-Nested Hyper-V lab environment in Azure for demonstrating **Azure Migrate discovery, software inventory, SQL discovery, and dependency analysis**.
+Nested Hyper-V lab in Azure for demonstrating:
+- Azure Migrate discovery
+- software inventory
+- SQL discovery
+- dependency analysis
+- grouped assessment
 
-> [!WARNING]
-> This is a **demo / lab pattern**, not an officially supported production pattern. The goal is to create a realistic on-prem-style estate inside a nested Hyper-V host so Azure Migrate can be demonstrated end-to-end.
+This repo now includes a working **v1 scaffold**:
+- Terraform for the Azure host + Bastion + storage + workspace
+- host bootstrap scripts
+- nested VM creation from reusable **sysprepped VHD templates**
+- PowerShell Direct guest configuration for Windows nested VMs
 
-## Goal
+## Reused guest templates we found from the Arc demo pattern
 
-Build a single Azure-hosted lab that looks and behaves like a small on-prem environment:
-- **One Azure VM** acts as the **Hyper-V host**
-- Multiple **nested VMs** act as on-prem servers
-- One nested VM runs the **Azure Migrate appliance**
-- Dependency analysis is done in the **supported way for Hyper-V: agent-based**
+These are the same public sysprepped guest images used by the older Arc demo / ArcBox-style approach:
 
-## Why this approach
+- **Windows Server 2022**
+  - `https://jumpstartprodsg.blob.core.windows.net/arcbox/prod/ArcBox-Win2K22.vhdx`
+- **SQL Server 2022 Developer**
+  - `https://jumpstartprodsg.blob.core.windows.net/arcbox/prod/ArcBox-SQL-DEV.vhdx`
+- **Ubuntu 22.04**
+  - `https://jumpstartprodsg.blob.core.windows.net/arcbox/prod/ArcBox-Ubuntu-01.vhdx`
 
-This gives us a clean demo story:
-- Azure Migrate appliance discovers a Hyper-V environment
-- Servers appear as on-prem / Hyper-V workloads, not native Azure VMs
-- We can show:
-  - Discovery and assessment
-  - Software inventory
-  - SQL Server discovery
-  - Dependency analysis
-  - Grouping and assessment
+For the **Azure Migrate appliance**, the repo uses the official Hyper-V appliance package URL:
+- `https://go.microsoft.com/fwlink/?linkid=2191848`
 
-## Key design decisions
+The continuation script downloads that package, extracts it, and attempts a Hyper-V import for `MIG-APPL`.
 
-### 1. Use nested Hyper-V, not plain Azure VMs
-For a demo, native Azure VMs weaken the Azure Migrate story. Nested guests look much closer to a real customer Hyper-V estate.
-
-### 2. Use **agent-based dependency analysis**
-For Hyper-V, the safe demo path is **agent-based dependency visualization** using:
-- Microsoft Monitoring Agent (MMA)
-- Dependency agent
-
-That avoids betting the demo on agentless dependency behavior.
-
-### 3. Use a **two-phase Hyper-V bootstrap**
-Installing the Hyper-V role requires a reboot. Custom Script Extension cannot survive that reboot cleanly.
-
-So the host setup should be:
-1. CSE / bootstrap script installs Hyper-V + prereqs + scheduled task
-2. Host reboots
-3. Scheduled task completes vSwitch, NAT, disk prep, ISO/VHD staging, nested VM creation
-
-### 4. Use Premium SSD + enough RAM
-Visual Studio / nested virtualization taught us the obvious lesson already: do **not** under-size demo VMs.
-
-Recommended host baseline:
-- **Standard_D16s_v5** minimum
-- **Premium SSD OS disk**
-- **Premium SSD data disk** for nested VHDX files
-
-## Proposed lab architecture
+## Lab shape
 
 ```text
-Azure RG
+Azure
 │
 ├─ Bastion Standard
-├─ Hyper-V Host VM (Windows Server 2025/2022, nested virt enabled)
-│  ├─ Internal vSwitch + NAT
-│  ├─ MIG-APPL       (Azure Migrate appliance)
-│  ├─ ADDS01         (optional DC / DNS for domain demo)
-│  ├─ APP01          (Windows app server / IIS)
-│  ├─ SQL01          (Windows + SQL Server)
-│  ├─ WEB01          (second app tier or client workload)
-│  └─ LNX01          (Ubuntu / mixed estate demo, optional)
-│
-└─ Supporting Azure resources
-   ├─ Storage account (scripts / ISOs / artifacts if needed)
-   ├─ Log Analytics workspace (for dependency analysis)
-   └─ Azure Migrate project
+├─ Hyper-V host VM (Windows Server 2025, nested virtualization)
+│  ├─ MIG-APPL  -> Azure Migrate appliance
+│  ├─ APP01     -> Windows app tier
+│  ├─ WEB01     -> Windows helper/web tier
+│  ├─ SQL01     -> SQL Server tier
+│  └─ LNX01     -> Ubuntu guest
+└─ Log Analytics workspace
 ```
 
-## Demo scenarios
+## Important implementation choices
 
-### Scenario A — Discovery
-- Add Hyper-V host to appliance
-- Discover nested VMs
-- Show machine inventory in Azure Migrate
+### 1) Sysprepped base images + differencing disks
+APP01, WEB01, SQL01, and LNX01 are created from reusable base templates.
+That keeps deployment faster and disk usage lower.
 
-### Scenario B — Software inventory
-- Enable guest credentials in appliance
-- Show discovered apps / roles / features
-- Highlight IIS / SQL Server / Windows features
+### 2) PowerShell Direct for Windows guest config
+The host uses **PowerShell Direct** to:
+- rename APP01 / WEB01 / SQL01
+- enable remoting
+- install IIS on APP01 / WEB01
+- open SQL firewall on SQL01
+- push sample traffic generation for dependency demos
 
-### Scenario C — SQL discovery
-- Discover SQL instance on `SQL01`
-- Show SQL readiness / inventory
+### 3) Azure Migrate appliance stays official
+I did **not** fake the appliance image. The repo downloads the official Hyper-V appliance package and tries to import it as `MIG-APPL`.
 
-### Scenario D — Dependency analysis
-- Install MMA + Dependency agent on `APP01`, `SQL01`, `WEB01`
-- Associate supported Log Analytics workspace
-- Show server dependency map
-- Group servers for assessment
+## Files that matter
 
-### Scenario E — Assessment story
-- Create Azure VM / Azure SQL assessment group
-- Talk through right-sizing, readiness, and migration options
+### Terraform
+- `terraform/main.tf`
+- `terraform/bastion.tf`
+- `terraform/host-vm.tf`
+- `terraform/providers.tf`
+- `terraform/variables.tf`
+- `terraform/outputs.tf`
+- `terraform/terraform.tfvars.example`
 
-## Important gotchas
+### Scripts
+- `scripts/Bootstrap-HyperVHost.ps1`
+- `scripts/Continue-HyperVHostSetup.ps1`
+- `scripts/New-NestedVm.ps1`
+- `scripts/Configure-GuestWorkloads.ps1`
 
-### Log Analytics workspace region
-Do **not** hardcode a cross-region workspace requirement in this repo.
+## Quick start
 
-Default the dependency-analysis workspace to **Australia East** with the rest of the lab. If Azure Migrate or the portal ever blocks association for a specific dependency-analysis path, validate the current supported-region behavior at build time and only then fall back to another supported region.
+```bash
+cd terraform
+cp terraform.tfvars.example ~/workspace/tfvars/azuremigrate-demo.tfvars
+terraform init -backend-config=~/workspace/tfvars/backend.hcl
+terraform plan -var-file=~/workspace/tfvars/azuremigrate-demo.tfvars -out=tfplan
+terraform apply tfplan
+```
 
-For this demo plan, assume **Australia East is valid** unless a live platform check proves otherwise.
+Then:
+1. Connect to the host with Bastion
+2. Wait for the scheduled continuation script to finish nested guest creation
+3. Open Hyper-V Manager
+4. Complete Azure Migrate appliance setup inside `MIG-APPL`
+5. Add the Hyper-V host into the appliance
+6. Install dependency agents on APP01 / WEB01 / SQL01 if needed for the chosen demo path
 
-### Hyper-V host requirements for appliance
-The appliance expects:
-- Hyper-V host reachable via WinRM / PowerShell remoting
-- Admin or equivalent delegated permissions on host
-- Hyper-V Integration Services running in guests
+## Default guest credentials from the reused templates
 
-### Network model
-The nested appliance and guests must have:
-- outbound internet access to Azure Migrate endpoints
-- line of sight to the Hyper-V host
-- line of sight to guest OS ports for inventory / analysis
+### Windows guests
+- Username: `Administrator`
+- Password: `ArcDemo123!!`
 
-## Repository plan
+### Linux guest
+- Username: `jumpstart`
+- Password: `JS123!!`
 
-- `docs/implementation-plan.md` — detailed build plan and phases
-- `docs/demo-flow.md` — presenter runbook
-- `terraform/` — Azure infrastructure for host + bastion + disks + storage
-- `scripts/` — host bootstrap + nested VM creation + guest prep
+## Notes
 
-## References
-
-- Azure Arc reference inspiration:
-  - <https://github.com/microsoft/azure_arc/tree/main/azure_arc_sqlsrv_jumpstart/azure/windows/defender_sql>
-- Prior repo pattern:
-  - <https://github.com/nthewara/arc-connectivity-demo>
-- Azure Migrate Hyper-V support matrix:
-  - <https://learn.microsoft.com/en-us/azure/migrate/migrate-support-matrix-hyper-v>
-- Azure Migrate appliance:
-  - <https://learn.microsoft.com/en-us/azure/migrate/migrate-appliance>
-- Dependency analysis:
-  - <https://learn.microsoft.com/en-us/azure/migrate/how-to-create-group-machine-dependencies>
+- Region default is **Australia East**.
+- The Log Analytics workspace is also created in **Australia East** by default.
+- If Azure Migrate enforces a different dependency-analysis constraint in practice, validate that live at deploy time instead of baking stale assumptions into the repo.
