@@ -97,16 +97,17 @@ resource "azurerm_virtual_machine_extension" "bootstrap" {
   type_handler_version = "1.10"
   tags                 = var.tags
 
-  settings = jsonencode({})
-
-  protected_settings = jsonencode({
-    commandToExecute = "powershell -ExecutionPolicy Bypass -File Bootstrap-HyperVHost.ps1 -NestedSubnetCidr '${var.nested_subnet_cidr}' -NestedGatewayIp '${var.nested_gateway_ip}' -DhcpStart '${var.dhcp_start}' -DhcpEnd '${var.dhcp_end}' -WindowsTemplateVhdUrl '${var.windows_template_vhd_url}' -SqlTemplateVhdUrl '${var.sql_template_vhd_url}' -LinuxTemplateVhdUrl '${var.linux_template_vhd_url}' -MigrateApplianceVhdUrl '${var.migrate_appliance_vhd_url}' -WindowsGuestAdminPassword '${var.windows_guest_admin_password}' -LinuxGuestUsername '${var.linux_guest_username}' -LinuxGuestPassword '${var.linux_guest_password}'"
+  settings = jsonencode({
     fileUris = [
       "https://raw.githubusercontent.com/nthewara/azuremigrate-demo/main/scripts/Bootstrap-HyperVHost.ps1",
       "https://raw.githubusercontent.com/nthewara/azuremigrate-demo/main/scripts/Continue-HyperVHostSetup.ps1",
       "https://raw.githubusercontent.com/nthewara/azuremigrate-demo/main/scripts/New-NestedVm.ps1",
       "https://raw.githubusercontent.com/nthewara/azuremigrate-demo/main/scripts/Configure-GuestWorkloads.ps1"
     ]
+  })
+
+  protected_settings = jsonencode({
+    commandToExecute = "powershell -ExecutionPolicy Bypass -File Bootstrap-HyperVHost.ps1 -NestedSubnetCidr '${var.nested_subnet_cidr}' -NestedGatewayIp '${var.nested_gateway_ip}' -DhcpStart '${var.dhcp_start}' -DhcpEnd '${var.dhcp_end}' -WindowsTemplateVhdUrl '${var.windows_template_vhd_url}' -SqlTemplateVhdUrl '${var.sql_template_vhd_url}' -LinuxTemplateVhdUrl '${var.linux_template_vhd_url}' -MigrateApplianceVhdUrl '${var.migrate_appliance_vhd_url}' -WindowsGuestAdminPassword '${var.windows_guest_admin_password}' -LinuxGuestUsername '${var.linux_guest_username}' -LinuxGuestPassword '${var.linux_guest_password}'"
   })
 
   depends_on = [azurerm_virtual_machine_data_disk_attachment.nested_data]
