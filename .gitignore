@@ -1,0 +1,9 @@
+.DS_Store
+.terraform/
+.terraform.lock.hcl
+*.tfplan
+terraform.tfstate*
+crash.log
+*.auto.tfvars
+terraform.tfvars
+.vscode/
