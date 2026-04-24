@@ -105,7 +105,7 @@ function Import-MigrateAppliance {
 
     if (Get-VM -Name 'MIG-APPL' -ErrorAction SilentlyContinue) {
         Write-Host "  MIG-APPL already exists -- skipping appliance import"
-        return
+        return $true
     }
 
     $extractDir = Join-Path $baseImageDir 'AzureMigrateAppliance'
@@ -116,14 +116,22 @@ function Import-MigrateAppliance {
     $configFile = Get-ChildItem $extractDir -Recurse -Include *.vmcx,*.xml -File | Select-Object -First 1
     if (-not $configFile) {
         Write-Warning "Could not find an importable Hyper-V appliance config in $extractDir. Import MIG-APPL manually from the extracted package."
-        return
+        return $false
     }
 
-    $imported = Import-VM -Path $configFile.FullName -Copy -GenerateNewId -VirtualMachinePath (Join-Path $VmDir 'ImportedVMs') -VhdDestinationPath (Join-Path $VmDir 'ImportedDisks') -ErrorAction Stop
-    Rename-VM -VM $imported -NewName 'MIG-APPL'
-    Connect-VMNetworkAdapter -VMName 'MIG-APPL' -SwitchName $SwitchName -ErrorAction SilentlyContinue
-    Start-VM -Name 'MIG-APPL' | Out-Null
-    Write-Host "  Imported and started MIG-APPL"
+    try {
+        $imported = Import-VM -Path $configFile.FullName -Copy -GenerateNewId -VirtualMachinePath (Join-Path $VmDir 'ImportedVMs') -VhdDestinationPath (Join-Path $VmDir 'ImportedDisks') -ErrorAction Stop
+        Rename-VM -VM $imported -NewName 'MIG-APPL'
+        Connect-VMNetworkAdapter -VMName 'MIG-APPL' -SwitchName $SwitchName -ErrorAction SilentlyContinue
+        Start-VM -Name 'MIG-APPL' | Out-Null
+        Write-Host "  Imported and started MIG-APPL"
+        return $true
+    }
+    catch {
+        Write-Warning "Azure Migrate appliance import failed and will be skipped for now: $($_.Exception.Message)"
+        Write-Warning "Use Compare-VM / manual import later to repair the MIG-APPL package."
+        return $false
+    }
 }
 
 $desktopPath = [Environment]::GetFolderPath('CommonDesktopDirectory')
