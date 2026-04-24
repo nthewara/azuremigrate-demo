@@ -25,7 +25,7 @@ New-Item -ItemType Directory -Path "$LabPath\scripts" -Force | Out-Null
 
 Start-Transcript -Path "$LabPath\Logs\Bootstrap-HyperVHost.log" -Append
 
-Write-Host "=== Azure Migrate Demo — Hyper-V Host Bootstrap ===" -ForegroundColor Cyan
+Write-Host "=== Azure Migrate Demo -- Hyper-V Host Bootstrap ===" -ForegroundColor Cyan
 Write-Host "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
 Write-Host "[1/6] Initialising nested VM data disk..."

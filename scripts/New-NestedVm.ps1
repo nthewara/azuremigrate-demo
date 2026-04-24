@@ -14,7 +14,7 @@ function New-NestedVm {
 
     $existing = Get-VM -Name $Name -ErrorAction SilentlyContinue
     if ($existing) {
-        Write-Host "  $Name already exists — skipping"
+        Write-Host "  $Name already exists -- skipping"
         return $existing
     }
 

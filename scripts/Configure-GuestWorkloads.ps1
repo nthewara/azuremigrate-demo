@@ -5,7 +5,7 @@ $labPath = "C:\AzureMigrateLab"
 $config = Get-Content "$labPath\lab-config.json" -Raw | ConvertFrom-Json
 
 Start-Transcript -Path "$labPath\Logs\Configure-GuestWorkloads.log" -Append
-Write-Host "=== Azure Migrate Demo — Configure Guest Workloads ===" -ForegroundColor Cyan
+Write-Host "=== Azure Migrate Demo -- Configure Guest Workloads ===" -ForegroundColor Cyan
 
 $securePassword = ConvertTo-SecureString $config.WindowsGuestAdminPassword -AsPlainText -Force
 $windowsCred = [pscredential]::new("Administrator", $securePassword)

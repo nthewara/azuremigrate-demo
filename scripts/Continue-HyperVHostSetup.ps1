@@ -12,7 +12,7 @@ $config = Get-Content $configPath -Raw | ConvertFrom-Json
 
 Start-Transcript -Path "$labPath\Logs\Continue-HyperVHostSetup.log" -Append
 
-Write-Host "=== Azure Migrate Demo — Continue Hyper-V Host Setup ===" -ForegroundColor Cyan
+Write-Host "=== Azure Migrate Demo -- Continue Hyper-V Host Setup ===" -ForegroundColor Cyan
 Write-Host "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
 function Get-PrefixLength {
@@ -40,7 +40,7 @@ function Download-File {
         if ($LASTEXITCODE -eq 0 -and (Test-Path $Destination)) {
             return
         }
-        Write-Warning "azcopy failed for $Url — falling back to Invoke-WebRequest"
+        Write-Warning "azcopy failed for $Url -- falling back to Invoke-WebRequest"
     }
 
     Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
@@ -104,7 +104,7 @@ function Import-MigrateAppliance {
     )
 
     if (Get-VM -Name 'MIG-APPL' -ErrorAction SilentlyContinue) {
-        Write-Host "  MIG-APPL already exists — skipping appliance import"
+        Write-Host "  MIG-APPL already exists -- skipping appliance import"
         return
     }
 
